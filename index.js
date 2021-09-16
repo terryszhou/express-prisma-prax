@@ -12,7 +12,7 @@ app.get('/', (req, res) => {
 
 app.get('/quotes', async (req, res) => {
     const currentPage = req.query.page || 1;
-    const listPerPage = 5;
+    const listPerPage = 10;
     const offset = (currentPage - 1) * listPerPage;
     const allQuotes = await prisma.quote.findMany({
         include: { author: true },
@@ -38,13 +38,15 @@ app.post('/quotes', async (req, res) => {
     try {
         const message = "Quote created successfully!"
         const author = await prisma.author.findFirst({
-            where: { name: authorName }
+            where: { 
+                name: authorName
+            }
         })
 
         if (!author) {
             await prisma.author.create({
                 data: {
-                    'name': authorName,
+                    name: authorName,
                     Quotes: {
                         create: quote
                     }
@@ -62,7 +64,25 @@ app.post('/quotes', async (req, res) => {
         })
         console.log("Created quote for an existing author.")
         return res.json({ message })
-        
+
+    } catch(e) {
+        console.error(e)
+        return res.status(500).json({ message: "Something went wrong" })
+    }
+})
+
+app.put('/quotes/:name', async (req, res) => {
+    const newAuthor = req.body.author
+    try {
+        await prisma.author.update({
+            where: {
+                name: req.params.name
+            },
+            data: {
+                name: newAuthor
+            }
+        })
+
     } catch(e) {
         console.error(e)
         return res.status(500).json({ message: "Something went wrong" })
